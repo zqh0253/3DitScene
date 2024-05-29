@@ -494,6 +494,9 @@ def launch(
                 except:
                     gc.collect()
                     torch.cuda.empty_cache()
+                finally:
+                    gc.collect()
+                    torch.cuda.empty_cache()
     
     def stop_run(pid):
         return [
