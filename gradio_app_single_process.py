@@ -464,6 +464,7 @@ def launch(
                         f"seed={seed}",
                         f"trainer.max_steps={max_steps}",
                         "trainer.num_sanity_val_steps=120",
+                        "trainer.val_check_interval=100",
                         f"system.geometry.ooi_bbox={bbox_str}",
                         f"system.geometry.geometry_convert_from=depth:{img_path}",
                         f"system.geometry.img_resolution=[{width},{height}]",
@@ -485,43 +486,43 @@ def launch(
         
                     status.progress = 'Finished!'
                     load_ckpt(os.path.join(trial_dir, 'ckpts/last.ckpt'))
-    
+                                          
                     yield status.tolist() + [
                         gr.update(value="Run", variant="primary", visible=True),
                         gr.update(visible=False),
                     ] + [gr.update(interactive=True) for _ in range(INTERACTIVE_N)]
-                except:
-                    del thread
-                    gc.collect()
+                except:                   
+                    del thread            
+                    gc.collect()          
                     torch.cuda.empty_cache()
-                finally:
-                    gc.collect()
+                finally:                  
+                    gc.collect()          
                     torch.cuda.empty_cache()
-    
-    def stop_run(pid):
-        return [
-            gr.update(
+                                          
+    def stop_run(pid):                    
+        return [                          
+            gr.update(                    
                 value="Please Refresh the Page",
-                variant="secondary",
-                visible=True,
-                interactive=False,
-            ),
-            gr.update(visible=False),
-        ]
-
+                variant="secondary",      
+                visible=True,             
+                interactive=False,        
+            ),                            
+            gr.update(visible=False),     
+        ]                                 
+                                          
     def inference_image(x_offset, y_offset, z_offset, rotate, prompt):
-        gc.collect()
-        torch.cuda.empty_cache()
-        if prompt in EXAMPLE_PROMPT_LIST:
+        gc.collect()                      
+        torch.cuda.empty_cache()          
+        if prompt in EXAMPLE_PROMPT_LIST: 
             load_ckpt(os.path.join("examples_cache/", prompt, "last.ckpt"))
-            # prune(system)
-
+            # prune(system)               
+                                          
         xyz_bak = system.geometry.get_xyz.data
         rot_bak = system.geometry.get_rotation.data
-
+                                          
         offset = torch.zeros(len(system.geometry._xyz), 3)
         ooi_mask = system.geometry.ooi_masks_0.view(-1).byte().to(device='cuda').float()
-
+                                          
         offset[ooi_mask.bool(), 0] = x_offset
         offset[ooi_mask.bool(), 1] = y_offset
         offset[ooi_mask.bool(), 2] = z_offset
@@ -664,8 +665,8 @@ def launch(
                     )
 
                     max_steps_input = gr.Slider(
-                        minimum=1,
-                        maximum=10000 if self_deploy else 5000,
+                        minimum=100,
+                        maximum=10000 if self_deploy else 2000,
                         value=3000 if self_deploy else 1000,
                         step=1,
                         label="Number of training steps",
