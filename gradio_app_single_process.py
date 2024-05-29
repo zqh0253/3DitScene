@@ -501,6 +501,7 @@ def launch(
         ]
 
     def inference_image(x_offset, y_offset, z_offset, rotate, prompt):
+        torch.cuda.empty_cache()
         if prompt in EXAMPLE_PROMPT_LIST:
             load_ckpt(os.path.join("examples_cache/", prompt, "last.ckpt"))
             # prune(system)
@@ -544,6 +545,7 @@ def launch(
         return rgb
    
     def inference_video(x_offset, y_offset, z_offset, rotate, prompt):
+        torch.cuda.empty_cache()
         if prompt in EXAMPLE_PROMPT_LIST:
             load_ckpt(os.path.join("examples_cache/", prompt, "last.ckpt"))
             # prune(system)

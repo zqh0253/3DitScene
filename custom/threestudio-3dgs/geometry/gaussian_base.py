@@ -406,7 +406,7 @@ class GaussianBaseModel(BaseGeometry, GaussianIO):
         lang_beta_2: float = 0.999
  
         inference_only: bool = False
-        pc_max_resolution: int = 1024
+        pc_max_resolution: int = 512
  
         use_sdxl_for_inpaint: bool = False
 
