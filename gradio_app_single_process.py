@@ -8,6 +8,7 @@ import tempfile
 import time
 import logging
 import threading
+import gc
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
@@ -407,6 +408,7 @@ def launch(
         seed: int,
         max_steps: int,
     ):
+        gc.collect()
         torch.cuda.empty_cache()
         if prompt in EXAMPLE_PROMPT_LIST:
             print(os.path.join("examples_cache/", prompt, "rgb.mp4"))
@@ -427,67 +429,71 @@ def launch(
                     gr.update(visible=False),                
                 ] + [gr.update(interactive=True) for _ in range(INTERACTIVE_N)]
             else:
-                bbox_str = ""
-                for each in bbox:
-                    bbox_str = bbox_str + f"{each[1].start},{each[0].start},{each[1].stop},{each[0].stop},"
-                bbox_str = '[' + bbox_str + ']'
+                try:
+                    bbox_str = ""
+                    for each in bbox:
+                        bbox_str = bbox_str + f"{each[1].start},{each[0].start},{each[1].stop},{each[0].stop},"
+                    bbox_str = '[' + bbox_str + ']'
         
-                # update status every 1 second
-                status_update_interval = 1
+                    # update status every 1 second
+                    status_update_interval = 1
         
-                # save the config to a temporary file
-                config_file = tempfile.NamedTemporaryFile()
+                    # save the config to a temporary file
+                    config_file = tempfile.NamedTemporaryFile()
         
-                with open(config_file.name, "w") as f:
-                    f.write(config_yaml)
+                    with open(config_file.name, "w") as f:
+                        f.write(config_yaml)
         
-                # manually assign the output directory, name and tag so that we know the trial directory
-                name = os.path.basename(config_path).split(".")[0]
-                tag = prompt + '_' + datetime.now().strftime("%Y%m%d-%H%M%S")
-                trial_dir = os.path.join(save_root, EXP_ROOT_DIR, name, tag)
-                alive_path = os.path.join(trial_dir, "alive")
-                img_path = os.path.join(save_root, EXP_ROOT_DIR, f"{name}-{tag}.png")
-                Image.fromarray(np.array(image['background'])[...,:3]).save(img_path)
+                    # manually assign the output directory, name and tag so that we know the trial directory
+                    name = os.path.basename(config_path).split(".")[0]
+                    tag = prompt + '_' + datetime.now().strftime("%Y%m%d-%H%M%S")
+                    trial_dir = os.path.join(save_root, EXP_ROOT_DIR, name, tag)
+                    alive_path = os.path.join(trial_dir, "alive")
+                    img_path = os.path.join(save_root, EXP_ROOT_DIR, f"{name}-{tag}.png")
+                    Image.fromarray(np.array(image['background'])[...,:3]).save(img_path)
     
-                width, height = image['background'].size
-                extras = [
-                        f'name="{name}"',
-                        f'tag="{tag}"',
-                        # "trainer.enable_progress_bar=false",
-                        f"exp_root_dir={os.path.join(save_root, EXP_ROOT_DIR)}",
-                        "use_timestamp=false",
-                        f'system.prompt_processor.prompt="{prompt}"',
-                        f'system.empty_prompt="{empty_prompt}"',
-                        f'system.side_prompt="{side_prompt}"',
-                        f"system.guidance.guidance_scale=5",
-                        f"seed={seed}",
-                        f"trainer.max_steps={max_steps}",
-                        "trainer.num_sanity_val_steps=120",
-                        f"system.geometry.ooi_bbox={bbox_str}",
-                        f"system.geometry.geometry_convert_from=depth:{img_path}",
-                        f"system.geometry.img_resolution=[{width},{height}]",
-                        f"data.width={width}", f"data.height={height}", f"data.eval_width={width}", f"data.eval_height={height}",
-                        # system.outpaint_step=500 system.crop_with_lang=True  system.guidance.max_step_percent=[0,0.5,0.1,1000] system.geometry.max_scaling=0.2
-                    ]
-                thread = threading.Thread(target=train, args=(extras, name, tag, config_file.name))
-                thread.start()
+                    width, height = image['background'].size
+                    extras = [
+                            f'name="{name}"',
+                            f'tag="{tag}"',
+                            # "trainer.enable_progress_bar=false",
+                            f"exp_root_dir={os.path.join(save_root, EXP_ROOT_DIR)}",
+                            "use_timestamp=false",
+                            f'system.prompt_processor.prompt="{prompt}"',
+                            f'system.empty_prompt="{empty_prompt}"',
+                            f'system.side_prompt="{side_prompt}"',
+                            f"system.guidance.guidance_scale=5",
+                            f"seed={seed}",
+                            f"trainer.max_steps={max_steps}",
+                            "trainer.num_sanity_val_steps=120",
+                            f"system.geometry.ooi_bbox={bbox_str}",
+                            f"system.geometry.geometry_convert_from=depth:{img_path}",
+                            f"system.geometry.img_resolution=[{width},{height}]",
+                            f"data.width={width}", f"data.height={height}", f"data.eval_width={width}", f"data.eval_height={height}",
+                            # system.outpaint_step=500 system.crop_with_lang=True  system.guidance.max_step_percent=[0,0.5,0.1,1000] system.geometry.max_scaling=0.2
+                        ]
+                    thread = threading.Thread(target=train, args=(extras, name, tag, config_file.name))
+                    thread.start()
     
-                while thread.is_alive():
-                    thread.join(timeout=1)
-                    status = get_current_status(save_root, trial_dir, alive_path)
+                    while thread.is_alive():
+                        thread.join(timeout=1)
+                        status = get_current_status(save_root, trial_dir, alive_path)
+    
+                        yield status.tolist() + [
+                            gr.update(visible=False),
+                            gr.update(value="Stop", variant="stop", visible=True),
+                        ] + [gr.update(interactive=False) for _ in range(INTERACTIVE_N)]
+        
+                    status.progress = 'Finished!'
+                    load_ckpt(os.path.join(trial_dir, 'ckpts/last.ckpt'))
     
                     yield status.tolist() + [
+                        gr.update(value="Run", variant="primary", visible=True),
                         gr.update(visible=False),
-                        gr.update(value="Stop", variant="stop", visible=True),
-                    ] + [gr.update(interactive=False) for _ in range(INTERACTIVE_N)]
-        
-                status.progress = 'Finished!'
-                load_ckpt(os.path.join(trial_dir, 'ckpts/last.ckpt'))
-    
-                yield status.tolist() + [
-                    gr.update(value="Run", variant="primary", visible=True),
-                    gr.update(visible=False),
-                ] + [gr.update(interactive=True) for _ in range(INTERACTIVE_N)]
+                    ] + [gr.update(interactive=True) for _ in range(INTERACTIVE_N)]
+                except:
+                    gc.collect()
+                    torch.cuda.empty_cache()
     
     def stop_run(pid):
         return [
@@ -501,6 +507,7 @@ def launch(
         ]
 
     def inference_image(x_offset, y_offset, z_offset, rotate, prompt):
+        gc.collect()
         torch.cuda.empty_cache()
         if prompt in EXAMPLE_PROMPT_LIST:
             load_ckpt(os.path.join("examples_cache/", prompt, "last.ckpt"))
@@ -545,6 +552,7 @@ def launch(
         return rgb
    
     def inference_video(x_offset, y_offset, z_offset, rotate, prompt):
+        gc.collect()
         torch.cuda.empty_cache()
         if prompt in EXAMPLE_PROMPT_LIST:
             load_ckpt(os.path.join("examples_cache/", prompt, "last.ckpt"))
