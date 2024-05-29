@@ -486,6 +486,7 @@ class GaussianBaseModel(BaseGeometry, GaussianIO):
             W, H = int(W / max(W, H) * self.cfg.pc_max_resolution), int(H / max(W, H) * self.cfg.pc_max_resolution)
         
         with torch.no_grad():
+            self.geowizard_pipe.to('cuda')
             depth = self.geowizard_pipe(
                 img,
                 denoising_steps = 25,
@@ -496,6 +497,7 @@ class GaussianBaseModel(BaseGeometry, GaussianIO):
                 color_map = 'Spectral',
                 gt_depth = gt_depth, mask = mask,
                 show_progress_bar = True)['depth_np']
+            self.geowizard_pipe.to('cpu')
             ret_depth = depth.copy()
             depth = torch.from_numpy(depth)[None]
             depth = torch.nn.functional.interpolate(depth[None], size=(H, W), mode='bilinear', align_corners=True).squeeze()
@@ -579,7 +581,7 @@ class GaussianBaseModel(BaseGeometry, GaussianIO):
         # setup GeoWizard
         geowizard_checkpoint_path = 'lemonaddie/geowizard'
         self.geowizard_pipe = DepthNormalEstimationPipeline.from_pretrained(
-            geowizard_checkpoint_path, torch_dtype=torch.float32).to(torch.device("cuda"))
+            geowizard_checkpoint_path, torch_dtype=torch.float32)
 
         self.base_inpainting_pipe = StableDiffusionInpaintPipeline.from_pretrained("runwayml/stable-diffusion-inpainting", torch_dtype=torch.float16)
         # self.base_inpainting_pipe = StableDiffusionInpaintPipeline.from_pretrained("runwayml/stable-diffusion-inpainting", torch_dtype=torch.float16, safety_checker=None)
@@ -771,6 +773,7 @@ class GaussianBaseModel(BaseGeometry, GaussianIO):
         blur_mask = Image.fromarray(cv2.blur(np.array(mask).astype(np.float32), (7, 7)) > 0)
         res = self.inpaint(img=rgb, mask=blur_mask, prompt=self.side_prompt)
 
+        self.geowizard_pipe.to('cuda')
         depth_unaligned = self.geowizard_pipe(
                 res,
                 denoising_steps = 25,
@@ -781,6 +784,7 @@ class GaussianBaseModel(BaseGeometry, GaussianIO):
                 color_map = 'Spectral',
                 gt_depth = None, mask = None,
                 show_progress_bar = True)['depth_np']
+        self.geowizard_pipe.to('cpu')
         prev_depth = depth_unaligned[~np.array(mask.resize((768,768)))]
         # inpaint the depth map
         depth_nd = depth[0].cpu().numpy().astype(np.uint8)
