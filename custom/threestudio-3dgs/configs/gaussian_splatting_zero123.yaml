@@ -1,0 +1,144 @@
+name: "gs-zero123-sai"
+tag: "${data.random_camera.height}_${rmspace:${basename:${data.image_path}},_}"
+exp_root_dir: "outputs"
+seed: 0
+
+data_type: "single-image-datamodule"
+data: # threestudio/data/image.py -> SingleImageDataModuleConfig
+  image_path: ./load/images/hamburger_rgba.png
+  height: [128, 256, 512]
+  width: [128, 256, 512]
+  resolution_milestones: [200, 300]
+  default_elevation_deg: 5.0
+  default_azimuth_deg: 0.0
+  default_camera_distance: 3.8
+  default_fovy_deg: 20.0
+  requires_depth: ${cmaxgt0orcmaxgt0:${system.loss.lambda_depth},${system.loss.lambda_depth_rel}}
+  requires_normal: ${cmaxgt0:${system.loss.lambda_normal}}
+  random_camera: # threestudio/data/uncond.py -> RandomCameraDataModuleConfig
+    height: 256
+    width: 256
+    batch_size: 4
+    eval_height: 512
+    eval_width: 512
+    eval_batch_size: 1
+    elevation_range: [-10, 80]
+    azimuth_range: [-180, 180]
+    camera_distance_range: [3.8, 3.8]
+    fovy_range: [20.0, 20.0] # Zero123 has fixed fovy
+    progressive_until: 0
+    camera_perturb: 0.0
+    center_perturb: 0.0
+    up_perturb: 0.0
+    light_position_perturb: 1.0
+    light_distance_range: [7.5, 10.0]
+    eval_elevation_deg: ${data.default_elevation_deg}
+    eval_camera_distance: ${data.default_camera_distance}
+    eval_fovy_deg: ${data.default_fovy_deg}
+    light_sample_strategy: "dreamfusion"
+    batch_uniform_azimuth: False
+    n_val_views: 30
+    n_test_views: 120
+
+system_type: "gaussian-splatting-zero123-system"
+system:
+  geometry_type: "gaussian-splatting"
+  geometry:
+    position_lr: [0, 0.001, 0.00002, 1000]
+    scale_lr: [0, 0.01, 0.001, 1000]
+    feature_lr: 0.01
+    opacity_lr: 0.05
+    rotation_lr: 0.001
+    densification_interval: 100
+    prune_interval: 100
+    opacity_reset_interval: 100000
+    densify_from_iter: 0
+    densify_until_iter: ${trainer.max_steps}
+    prune_from_iter: 0
+    prune_until_iter: ${trainer.max_steps}
+    densify_grad_threshold: 0.01
+    min_opac_prune: 0.005
+    split_thresh: 0.02
+    radii2d_thresh: 1000
+
+    sphere: False
+
+    init_num_pts: 4096
+    pc_init_radius: 0.5
+    opacity_init: 0.05
+    max_num: 500000
+
+  exporter_type: "gaussian-mesh-exporter"
+
+  renderer_type: "diff-gaussian-rasterizer-advanced"
+  renderer:
+    debug: false
+    invert_bg_prob: 1.0
+
+  material_type: "no-material" # unused
+  material:
+    n_output_dims: 0
+
+  background_type: "solid-color-background" # unused
+
+  prompt_processor_type: "dummy-prompt-processor" # Zero123 doesn't use prompts
+  prompt_processor:
+    pretrained_model_name_or_path: ""
+    prompt: ""
+
+  guidance_type: "stable-zero123-guidance"
+  guidance:
+    pretrained_config: "./load/zero123/sd-objaverse-finetune-c_concat-256.yaml"
+    pretrained_model_name_or_path: "./load/zero123/stable_zero123.ckpt"
+    vram_O: ${not:${gt0:${system.freq.guidance_eval}}}
+    cond_image_path: ${data.image_path}
+    cond_elevation_deg: ${data.default_elevation_deg}
+    cond_azimuth_deg: ${data.default_azimuth_deg}
+    cond_camera_distance: ${data.default_camera_distance}
+    guidance_scale: 3.0
+    min_step_percent: [50, 0.7, 0.3, 200]  # (start_iter, start_val, end_val, end_iter)
+    max_step_percent: [50, 0.98, 0.8, 200]
+
+  freq:
+    ref_only_steps: 0
+    guidance_eval: 0
+
+  loggers:
+    wandb:
+      enable: false
+      project: "threestudio"
+      name: None
+
+  loss:
+    lambda_sds: 0.1
+    lambda_rgb: [100, 500., 1000., 400]
+    lambda_mask: 50.
+    lambda_depth: 0. # 0.05
+    lambda_depth_rel: 0. # [0, 0, 0.05, 100]
+    lambda_normal: 0. # [0, 0, 0.05, 100]
+    lambda_normal_smooth: 0.
+    lambda_3d_normal_smooth: 0.
+
+  optimizer:
+    name: Adam
+    args:
+      lr: 0.01
+      betas: [0.9, 0.99]
+      eps: 1.e-8
+    params:
+      background:
+        lr: 0.001
+
+
+trainer:
+  max_steps: 5000
+  log_every_n_steps: 1
+  num_sanity_val_steps: 0
+  val_check_interval: 100
+  enable_progress_bar: true
+  precision: 32
+
+checkpoint:
+  save_last: true # save at each validation time
+  save_top_k: -1
+  every_n_train_steps: 100 # ${trainer.max_steps}

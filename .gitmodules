@@ -1,0 +1,12 @@
+[submodule "submodules/MobileSAM-lang"]
+	path = submodules/MobileSAM-lang
+	url = https://github.com/zqh0253/MobileSAM-lang.git
+[submodule "submodules/segment-anything-langsplat"]
+	path = submodules/segment-anything-langsplat
+	url = https://github.com/zqh0253/segment-anything-langsplat.git
+[submodule "submodules/simple-knn"]
+	path = submodules/simple-knn
+	url = https://github.com/DSaurus/simple-knn.git
+[submodule "submodules/diff-gaussian-rasterization"]
+	path = submodules/diff-gaussian-rasterization
+	url = https://github.com/zqh0253/diff-gaussian-rasterization-lang

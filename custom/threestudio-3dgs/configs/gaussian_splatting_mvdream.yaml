@@ -1,0 +1,131 @@
+name: "gs-sds-mvdream"
+tag: "${rmspace:${system.prompt_processor.prompt},_}"
+exp_root_dir: "outputs"
+seed: 0
+
+data_type: "mvdream-random-multiview-camera-datamodule"
+data:
+  batch_size: [4,4]
+  n_view: 4
+  # 0-4999: 64x64, >=5000: 256x256
+  width: [256, 256]
+  height: [256, 256]
+  resolution_milestones: [1000]
+  camera_distance_range: [0.8, 1.0] # relative
+  fovy_range: [15, 60]
+  elevation_range: [0, 30]
+  camera_perturb: 0.
+  center_perturb: 0.
+  up_perturb: 0.
+  n_val_views: 4
+  eval_camera_distance: 3.0
+  eval_fovy_deg: 40.
+  rays_d_normalize: false
+
+system_type: "gaussian-splatting-mvdream-system"
+system:
+  geometry_type: "gaussian-splatting"
+  geometry:
+    position_lr: [0, 0.0001, 0.00001, 1500]
+    scale_lr: [0, 0.01, 0.001, 1500]
+    feature_lr: [0, 0.005, 0.001, 6000]
+    opacity_lr: 0.05
+    rotation_lr: 0.001
+    pred_normal: false
+    normal_lr: 0.005
+    densification_interval: 300
+    prune_interval: 300
+    opacity_reset_interval: 100000
+    densify_from_iter: 1500
+    densify_until_iter: ${trainer.max_steps}
+    prune_from_iter: 1500
+    prune_until_iter: ${trainer.max_steps}
+    densify_grad_threshold: 0.01
+    min_opac_prune: 0.01
+    split_thresh: 0.02
+    radii2d_thresh: 1000
+
+    sphere: False
+    color_clip: [0, 0.01, 0.02, 1500, 0.5, 4000, 1.0, 7000]
+
+    init_num_pts: 4096
+    pc_init_radius: 0.5
+    opacity_init: 0.05
+    max_num: 100000
+
+  renderer_type: "diff-gaussian-rasterizer-shading"
+  renderer:
+    debug: false
+
+  material_type: "gaussian-diffuse-with-point-light-material"
+  material:
+    ambient_only_steps: 3000
+    textureless_prob: 0.0
+    ambient_light_color: [0.9, 0.9, 0.9]
+    diffuse_light_color: [0.1, 0.1, 0.1]
+    soft_shading: true
+
+  background_type: "gaussian-mvdream-neural-environment-map-background"
+  background:
+    color_activation: sigmoid
+    random_aug: true
+    share_aug_bg: true
+    random_aug_prob: 0.95
+
+  prompt_processor_type: "stable-diffusion-prompt-processor"
+  prompt_processor:
+    pretrained_model_name_or_path: "stabilityai/stable-diffusion-2-1-base"
+    prompt: ???
+    negative_prompt: "ugly, bad anatomy, blurry, pixelated obscure, unnatural colors, poor lighting, dull, and unclear, cropped, lowres, low quality, artifacts, duplicate, morbid, mutilated, poorly drawn face, deformed, dehydrated, bad proportions"
+    front_threshold: 30.
+    back_threshold: 30.
+
+  guidance_type: "mvdream-multiview-diffusion-guidance"
+  guidance:
+    model_name: "sd-v2.1-base-4view"
+    ckpt_path: null # path to a pre-downloaded checkpoint file (null for loading from URL)
+    guidance_scale: 50.0
+    min_step_percent: [0, 0.98, 0.02, 7000]  # (start_iter, start_val, end_val, end_iter)
+    max_step_percent: [0, 0.98, 0.50, 7000]
+    recon_loss: true
+    recon_std_rescale: 0.5
+
+  exporter_type: "gaussian-mesh-exporter"
+
+  loggers:
+    wandb:
+      enable: false
+      project: 'threestudio'
+      name: None
+
+  loss:
+    lambda_sds: 0.1
+    lambda_position: 1.0
+    lambda_opacity: 0.0001
+    lambda_scales: 0.0001
+    lambda_sparsity: 1.0
+    lambda_tv_loss: 0.0
+    lambda_depth_tv_loss: 1.0
+
+  optimizer:
+    name: Adam
+    args:
+      lr: 0.01
+      betas: [0.9, 0.99]
+      eps: 1.e-6
+    params:
+      background:
+        lr: 0.0001
+
+trainer:
+  max_steps: 10000
+  log_every_n_steps: 1
+  num_sanity_val_steps: 0
+  val_check_interval: 100
+  enable_progress_bar: true
+  precision: 32-true
+
+checkpoint:
+  save_last: true # save at each validation time
+  save_top_k: -1
+  every_n_train_steps: ${trainer.max_steps}
