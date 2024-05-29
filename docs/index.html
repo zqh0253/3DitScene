@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1" name="viewport" />
+  <title> 3DitScene </title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat|Segoe+UI" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-carousel@4.0.3/dist/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/bulma.min.css">
+  <link rel="stylesheet" href="./static/fontawesome.all.min.css">
+  <script defer src="./static/fontawesome.all.min.js"></script>
+</head>
+
+<body>
+  <!-- SECTION: HEADER -->
+  <div class="n-header">
+  </div>
+  <div class="n-title">
+    <h1> 3DitScene: Editing Any Scene via <br> Language-guided Disentangled Gaussian Splatting </h1>
+  </div>
+  <div class="n-byline">
+    <div class="byline">
+      <ul class="authors">
+        <li> <a href="https://zqh0253.github.io" target="_blank">Qihang Zhang</a> <sup> 1 </sup></li>
+        <li> <a href="https://justimyhxu.github.io/" target="_blank">Yinghao Xu</a> <sup> 2 </sup></li>
+        <li> <a href="https://mightychaos.github.io/" target="_blank">Chaoyang Wang</a><sup> 3 </sup></li>
+        <li> <a href="https://hsinyinglee.com/" target="_blank">Hsin-Ying Lee</a> <sup> 3 </sup></li>
+        <br>
+        <li> <a href="https://stanford.edu/~gordonwz/" target="_blank">Gordon Wetzstein</a> <sup> 2</sup></li>
+        <li> <a href="https://boleizhou.github.io/" target="_blank">Bolei Zhou</a> <sup> 4</sup></li>
+        <li> <a href="https://ceyuan.me/" target="_blank">Ceyuan Yang</a><sup> 5 </sup></li>
+      </ul>
+      <div class="authors-affiliations-gap"></div>
+      <ul class="authors affiliations">
+        <li>
+          <sup> 1 </sup> The Chinese University of Hong Kong
+        </li>
+        <li>
+          <sup> 2 </sup> Stanford University
+        </li>
+        <li>
+          <sup> 3 </sup> Snap Inc.
+        </li>
+        <br>
+        <li>
+          <sup> 4 </sup> University of California, Los Angeles
+        </li>
+        <li>
+          <sup> 5 </sup> ByteDance
+        </li>
+      </ul>
+
+      <ul>
+        <div class="column has-text-centered">
+          <div class="publication-links">
+            <!-- PDF Link. -->
+            <span class="link-block">
+              <a href="media/3ditscene.pdf" target="_blank" class="external-link button is-normal is-rounded">
+                <span class="icon">
+                  <i class="fas fa-file-pdf"></i>
+                </span>
+                <span>Paper</span>
+              </a>
+            </span>
+            <span class="link-block">
+              <a href="" target="_blank" class="external-link button is-normal is-rounded">
+                <span class="icon">
+                  <i class="ai ai-arxiv"></i>
+                </span>
+                <span>arXiv</span>
+              </a>
+            </span>
+            <!-- Video Link. -->
+            <span class="link-block">
+              <a href="https://huggingface.co/spaces/qihang/3Dit-Scene"
+                 target="_blank" class="external-link button is-normal is-rounded">
+                <span class="icon">
+                <img src="media/hf-logo.svg" alt="">
+                </span>
+                <span>Huggingface Space</span>
+              </a>
+            </span>
+            <!-- Code Link. -->
+            <span class="link-block">
+              <a href="https://github.com/zqh0253/3DitScene" target="_blank" class="external-link button is-normal is-rounded">
+                <span class="icon">
+                  <i class="fab fa-github"></i>
+                </span>
+                <span>Code</span>
+              </a>
+            </span>
+            <!-- Dataset Link. -->
+            <span class="link-block">
+              <a href="./#citation" class="external-link button is-normal is-rounded">
+                <span class="icon">
+                  <i class="fa fa-quote-left"></i>
+                </span>
+                <span>Cite</span>
+              </a>
+          </div>
+      </ul>
+
+    </div>
+  </div>
+  <!-- SECTION: MAIN BODY -->
+  <div class="n-article">
+
+
+
+
+    <!-- teaser -->
+    <div>
+      <video width="100%" autoplay loop muted controls playsinline>
+        <source src="media/video/cherry.mp4" type="video/mp4">
+        </source>
+      </video>
+    </div>
+
+    <!-- paper links -->
+
+    <h2 id="method"> Method </h2>
+
+
+  </p><img src="media/optimization_pipeline.png" width="100%" /></p>
+  <figcaption><b>Optimization Framework:</b> Given input view, we initialize 3DGS by lifting pixels to 3D space and expand it over novel views by RGB and depth inpainting. Then, we distill semantic features into 3D Gaussians to achieve object-level disentanglement. </figcaption>
+  <p> <br></br></p>
+  </p><img src="media/inference_pipeline.png" width="100%" /></p>
+  <figcaption><b>Inference Framework:</b> User can query object of interest via language prompt. Enabled by the disentangled 3D representation, user can change camera viewpoint, and manipulate the object of interest in a flexible manner. </figcaption>
+
+
+    <p>
+      <br>We propose <b>3DitScene</b>, a novel and unified scene editing framework leveraging language-guided disentangled
+      Gaussian Splatting that enables seamless editing from 2D to 3D, allowing precise control over scene composition
+      and individual objects.
+      We first incorporate 3D Gaussians that are refined through generative priors and optimization techniques.
+      Language features from CLIP then introduce semantics into 3D geometry for object disentanglement.
+      With the disentangled Gaussians, our method allows for manipulation at both the global and individual levels,
+      revolutionizing creative expression and empowering control over scenes and objects.
+      Experimental results demonstrate the effectiveness and versatility of <b>3DitScene</b> in scene image editing.
+    </p>
+
+    <h2 id="results"> Semantic Feature Visualization </h2>
+
+    <div>
+      <video width="100%" autoplay loop muted controls playsinline>
+        <source src="media/video/feature.mp4" type="video/mp4">
+        </source>
+        Feature visualization of the semantic embedding in 3DGS.
+      </video>
+    </div>
+
+    <p>In our 3DGS-based scene representation, each Gaussian includes a semantic embedding.
+      Integrating semantics into 3DGS helps disentangle the overall scene, providing precise control over local objects.
+    </p> <br><br>
+
+    
+    <h2 id="results"> More Samples: Camera Control </h2>
+
+
+    <video width="100%" autoplay loop muted controls playsinline>
+      <source src="media/video/rotate.mp4" type="video/mp4">
+      </source>
+    </video>
+    <figcaption>Camera control over various scenes.</figcaption>
+
+
+    <h2 id="results"> More Samples: Local Object Control </h2>
+
+    <video width="100%" autoplay loop muted controls playsinline>
+      <source src="media/video/boy.mp4" type="video/mp4">
+      </source>
+    </video>
+    <figcaption>Various control over the boy in the scene.</figcaption>
+
+
+
+    <h2 id="results"> More Samples: Local Object Editing + Camera Control </h2>
+
+
+    <video width="100%" autoplay loop muted controls playsinline>
+      <source src="media/video/bear.mp4" type="video/mp4">
+      </source>
+    </video>
+    <figcaption>Move the bear, and control the camera.<br></br></figcaption>
+
+    
+
+    <video width="100%" autoplay loop muted controls playsinline>
+      <source src="media/video/shrine.mp4" type="video/mp4">
+      </source>
+    </video>
+
+    <figcaption>Move / remove the person, and control the camera.<br></br></figcaption>
+
+    <video width="100%" autoplay loop muted controls playsinline>
+      <source src="media/video/fish.mp4" type="video/mp4">
+      </source>
+    </video>
+    <figcaption>Remove the headscarf / hat, and control the camera.<br></br></figcaption>
+
+    <video width="100%" autoplay loop muted controls playsinline>
+      <source src="media/video/samoye.mp4" type="video/mp4">
+      </source>
+    </video>
+    <figcaption>Rotate the Samoye, and control the camera.<br></br></figcaption>
+
+    <video width="100%" autoplay loop muted controls playsinline>
+      <source src="media/video/bear_ts.mp4" type="video/mp4">
+      </source>
+    </video>
+    <figcaption>Rotate / move / remove the bear, and control the camera.<br></br></figcaption>
+
+    <video width="100%" autoplay loop muted controls playsinline>
+      <source src="media/video/dragon.mp4" type="video/mp4">
+      </source>
+    </video>
+    <figcaption>Remove the sheep, and control the camera.<br></br></figcaption>
+
+
+
+
+    <h2 id="citation"> Citation </h2>
+    <pre><code>@inproceedings{zhang20243DitScene,
+              author = {Qihang Zhang and Yinghao Xu and Chaoyang Wang and Hsin-Ying Lee and Gordon Wetzstein and Bolei Zhou and Ceyuan Yang},
+              title = {{3DitScene}: Editing Any Scene via Language-guided Disentangled Gaussian Splatting},
+              booktitle = {arXiv},
+              year = {2024}
+            }</code></pre>
+
+    <h2 id="acknowledgments"> Acknowledgments</h2>
+    <p>We borrow the source code of this website from <a style="color: blue;"
+        href="https://nvlabs.github.io/genvs/">GeNVS</a>.</p>
+
+
+
+    <div class="n-footer">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bulma-carousel@4.0.3/dist/js/bulma-carousel.min.js"></script>
+    <script>
+      bulmaCarousel.attach('#carousel-local', {
+        slidesToScroll: 1,
+        slidesToShow: 1,
+        infinite: true,
+        autoplay: false,
+        autoplaySpeed: 10000,
+        // icons: { previous: "L", next: "<span style='color:green;font-weight:800'>R</span>"}
+      });
+    </script>
+
+</body>
+
+</html>

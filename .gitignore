@@ -1,0 +1,7 @@
+ckpts/
+outputs/
+.threestudio_cache/
+
+*.pyc
+*.DS_Store
+
