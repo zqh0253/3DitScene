@@ -407,6 +407,7 @@ def launch(
         seed: int,
         max_steps: int,
     ):
+        torch.cuda.empty_cache()
         if prompt in EXAMPLE_PROMPT_LIST:
             print(os.path.join("examples_cache/", prompt, "rgb.mp4"))
             print(os.path.join("examples_cache/", prompt, "feat.mp4"))
