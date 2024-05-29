@@ -419,67 +419,74 @@ def launch(
             save_root = '.'
             mask = np.array(image['layers'][0])[..., 3]
             bbox = create_bounding_boxes(mask)
-            bbox_str = ""
-            for each in bbox:
-                bbox_str = bbox_str + f"{each[1].start},{each[0].start},{each[1].stop},{each[0].stop},"
-            bbox_str = '[' + bbox_str + ']'
+            if len(bbox) == 0:
+                status_list = ["You need to use the brush to mark the content of interest over the image!", "load log", None, None]
+                yield status_list + [                    
+                    gr.update(value="Run", variant="primary", visible=True),
+                    gr.update(visible=False),                
+                ] + [gr.update(interactive=True) for _ in range(INTERACTIVE_N)]
+            else:
+                bbox_str = ""
+                for each in bbox:
+                    bbox_str = bbox_str + f"{each[1].start},{each[0].start},{each[1].stop},{each[0].stop},"
+                bbox_str = '[' + bbox_str + ']'
+        
+                # update status every 1 second
+                status_update_interval = 1
+        
+                # save the config to a temporary file
+                config_file = tempfile.NamedTemporaryFile()
+        
+                with open(config_file.name, "w") as f:
+                    f.write(config_yaml)
+        
+                # manually assign the output directory, name and tag so that we know the trial directory
+                name = os.path.basename(config_path).split(".")[0]
+                tag = prompt + '_' + datetime.now().strftime("%Y%m%d-%H%M%S")
+                trial_dir = os.path.join(save_root, EXP_ROOT_DIR, name, tag)
+                alive_path = os.path.join(trial_dir, "alive")
+                img_path = os.path.join(save_root, EXP_ROOT_DIR, f"{name}-{tag}.png")
+                Image.fromarray(np.array(image['background'])[...,:3]).save(img_path)
     
-            # update status every 1 second
-            status_update_interval = 1
+                width, height = image['background'].size
+                extras = [
+                        f'name="{name}"',
+                        f'tag="{tag}"',
+                        # "trainer.enable_progress_bar=false",
+                        f"exp_root_dir={os.path.join(save_root, EXP_ROOT_DIR)}",
+                        "use_timestamp=false",
+                        f'system.prompt_processor.prompt="{prompt}"',
+                        f'system.empty_prompt="{empty_prompt}"',
+                        f'system.side_prompt="{side_prompt}"',
+                        f"system.guidance.guidance_scale=5",
+                        f"seed={seed}",
+                        f"trainer.max_steps={max_steps}",
+                        "trainer.num_sanity_val_steps=120",
+                        f"system.geometry.ooi_bbox={bbox_str}",
+                        f"system.geometry.geometry_convert_from=depth:{img_path}",
+                        f"system.geometry.img_resolution=[{width},{height}]",
+                        f"data.width={width}", f"data.height={height}", f"data.eval_width={width}", f"data.eval_height={height}",
+                        # system.outpaint_step=500 system.crop_with_lang=True  system.guidance.max_step_percent=[0,0.5,0.1,1000] system.geometry.max_scaling=0.2
+                    ]
+                thread = threading.Thread(target=train, args=(extras, name, tag, config_file.name))
+                thread.start()
     
-            # save the config to a temporary file
-            config_file = tempfile.NamedTemporaryFile()
+                while thread.is_alive():
+                    thread.join(timeout=1)
+                    status = get_current_status(save_root, trial_dir, alive_path)
     
-            with open(config_file.name, "w") as f:
-                f.write(config_yaml)
+                    yield status.tolist() + [
+                        gr.update(visible=False),
+                        gr.update(value="Stop", variant="stop", visible=True),
+                    ] + [gr.update(interactive=False) for _ in range(INTERACTIVE_N)]
+        
+                status.progress = 'Finished!'
+                load_ckpt(os.path.join(trial_dir, 'ckpts/last.ckpt'))
     
-            # manually assign the output directory, name and tag so that we know the trial directory
-            name = os.path.basename(config_path).split(".")[0]
-            tag = prompt + '_' + datetime.now().strftime("%Y%m%d-%H%M%S")
-            trial_dir = os.path.join(save_root, EXP_ROOT_DIR, name, tag)
-            alive_path = os.path.join(trial_dir, "alive")
-            img_path = os.path.join(save_root, EXP_ROOT_DIR, f"{name}-{tag}.png")
-            Image.fromarray(np.array(image['background'])[...,:3]).save(img_path)
-
-            width, height = image['background'].size
-            extras = [
-                    f'name="{name}"',
-                    f'tag="{tag}"',
-                    # "trainer.enable_progress_bar=false",
-                    f"exp_root_dir={os.path.join(save_root, EXP_ROOT_DIR)}",
-                    "use_timestamp=false",
-                    f'system.prompt_processor.prompt="{prompt}"',
-                    f'system.empty_prompt="{empty_prompt}"',
-                    f'system.side_prompt="{side_prompt}"',
-                    f"system.guidance.guidance_scale=5",
-                    f"seed={seed}",
-                    f"trainer.max_steps={max_steps}",
-                    "trainer.num_sanity_val_steps=120",
-                    f"system.geometry.ooi_bbox={bbox_str}",
-                    f"system.geometry.geometry_convert_from=depth:{img_path}",
-                    f"system.geometry.img_resolution=[{width},{height}]",
-                    f"data.width={width}", f"data.height={height}", f"data.eval_width={width}", f"data.eval_height={height}",
-                    # system.outpaint_step=500 system.crop_with_lang=True  system.guidance.max_step_percent=[0,0.5,0.1,1000] system.geometry.max_scaling=0.2
-                ]
-            thread = threading.Thread(target=train, args=(extras, name, tag, config_file.name))
-            thread.start()
-
-            while thread.is_alive():
-                thread.join(timeout=1)
-                status = get_current_status(save_root, trial_dir, alive_path)
-
                 yield status.tolist() + [
+                    gr.update(value="Run", variant="primary", visible=True),
                     gr.update(visible=False),
-                    gr.update(value="Stop", variant="stop", visible=True),
-                ] + [gr.update(interactive=False) for _ in range(INTERACTIVE_N)]
-    
-            status.progress = 'Finished!'
-            load_ckpt(os.path.join(trial_dir, 'ckpts/last.ckpt'))
-
-            yield status.tolist() + [
-                gr.update(value="Run", variant="primary", visible=True),
-                gr.update(visible=False),
-            ] + [gr.update(interactive=True) for _ in range(INTERACTIVE_N)]
+                ] + [gr.update(interactive=True) for _ in range(INTERACTIVE_N)]
     
     def stop_run(pid):
         return [
@@ -799,7 +806,7 @@ def launch(
 
     print('launch!', launch_args, flush=True)
 
-    demo.queue().launch(**launch_args)
+    demo.queue(default_concurrency_limit=1).launch(**launch_args)
 
 
 if __name__ == "__main__":
