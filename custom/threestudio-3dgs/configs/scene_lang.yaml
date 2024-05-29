@@ -100,7 +100,7 @@ system:
   exporter_type: "gaussian-mesh-exporter"
 
   sam_clip:
-    use_mobile_sam: False
+    use_mobile_sam: True
 
   loggers:
     wandb:
