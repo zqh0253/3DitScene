@@ -19,7 +19,7 @@
 ## Installation
 
 + Install `Python >= 3.8`.
-+ Install `Python >= 1.12`. We have tested on `torch==2.0.1+cu118`, but other versions should also work fine.
++ Install `torch >= 1.12`. We have tested on `torch==2.0.1+cu118`, but other versions should also work fine.
 + Install dependencies:
 ```
 pip install -r requirements.txt
