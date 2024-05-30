@@ -517,6 +517,7 @@ def launch(
             load_ckpt(os.path.join("examples_cache/", prompt, "last.ckpt"))
             # prune(system)               
                                           
+        system.geometry._opacity_mask = None
         xyz_bak = system.geometry.get_xyz.data
         rot_bak = system.geometry.get_rotation.data
                                           
@@ -562,6 +563,7 @@ def launch(
             load_ckpt(os.path.join("examples_cache/", prompt, "last.ckpt"))
             # prune(system)
 
+        system.geometry._opacity_mask = None
         video_writer = imageio.get_writer('result.mp4', fps=40)
         xyz_bak = system.geometry.get_xyz.data
         rot_bak = system.geometry.get_rotation.data
