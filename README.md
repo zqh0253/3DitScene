@@ -61,7 +61,11 @@ system.prompt_processor.prompt="a teddy bear in Times Square" system.empty_promp
 
 ## Huggingface demo
 
-We provide a huggingface demo. You can either visit our [online huggingface space](https://huggingface.co/spaces/qihang/3Dit-Scene), or deploy it locally by:
+We provide a huggingface demo. You have two options to explore our demo: 
+(1) Visit our [online Hugging Face space](https://huggingface.co/spaces/qihang/3Dit-Scene).
+(2) Deploy it locally by following these steps:
++ Install the necessary packages and download required files as specified in our [Dockerfile](https://huggingface.co/spaces/qihang/3Dit-Scene/blob/main/Dockerfile),
++ Run the following command to launch the service at `localhost:10091`:
 ```
 python gradio_app_single_process.py --listen --hf-space --port 10091
 ```

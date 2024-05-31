@@ -4,7 +4,7 @@ jaxtyping
 typeguard
 git+https://github.com/KAIR-BAIR/nerfacc.git@v0.5.2
 git+https://github.com/NVlabs/tiny-cuda-nn/#subdirectory=bindings/torch
-diffusers<0.20
+diffusers==0.25.0
 transformers==4.28.1
 accelerate
 opencv-python
@@ -20,7 +20,7 @@ networkx
 pysdf
 PyMCubes
 wandb
-gradio==4.11.0
+gradio==4.27.0
 git+https://github.com/ashawkey/envlight.git
 torchmetrics
 plyfile
