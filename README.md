@@ -20,19 +20,19 @@
 
 + Install `Python >= 3.8`.
 + Install `torch >= 1.12`. We have tested on `torch==2.0.1+cu118`, but other versions should also work fine.
-+ Install dependencies:
-```
-pip install -r requirements.txt
-```
 + Clone our repo:
 ```
 git clone https://github.com/zqh0253/3DitScene.git --recursive
+```
++ Install dependencies:
+```
+pip install -r requirements.txt
 ```
 + Install submodules:
 ```
 pip install ./submodules/segment-anything-langsplat
 pip install ./submodules/MobileSAM-lang
-pip install ./submodules/diff_gaussian_rasterization
+pip install ./submodules/langsplat-rasterization
 pip install ./submodules/simple-knn
 ```
 + Prepare weights for `SAM`:
