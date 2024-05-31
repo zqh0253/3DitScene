@@ -10,3 +10,6 @@
 [submodule "submodules/diff-gaussian-rasterization"]
 	path = submodules/diff-gaussian-rasterization
 	url = https://github.com/zqh0253/diff-gaussian-rasterization-lang
+[submodule "submodules/langsplat-rasterization"]
+	path = submodules/langsplat-rasterization
+	url = https://github.com/minghanqin/langsplat-rasterization.git
